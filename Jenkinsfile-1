@@ -10,9 +10,9 @@ pipeline {
   }
   stages {
     stage('Test') {
-      when {
-        environment name: 'ENVIRONMENT', value: 'dev'
-      }
+      // when {
+      //   environment name: 'ENVIRONMENT', value: 'dev'
+      // }
       steps {
           withCredentials([file(credentialsId: env.CREDENTIAL, variable: 'KUBECONFIG')]) {
               sh  """
