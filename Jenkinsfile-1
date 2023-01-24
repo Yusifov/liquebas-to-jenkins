@@ -1,14 +1,24 @@
 pipeline {
   agent {
-    docker { image 'liquibase/liquibase:4.4.2' }
+    label 'master'
+  }
+  parameters {
+    choice choices: ['dev', 'prod'], description: 'The environment where the release will be deployed', name: 'ENVIRONMENT'
+  }
+  environment {
+    CREDENTIAL = "${ENVIRONMENT == "dev" | ENVIRONMENT == "patch" ? "automlDev" : ENVIRONMENT == "prod" ? "automlIsnet" : "automlProd"}"
   }
   stages {
     stage('Test') {
-      agent {
-          label 'slave-1'
+      when {
+        environment name: 'ENVIRONMENT', value: 'dev'
       }
       steps {
-        sh 'kubectl get pods -A'
+          withCredentials([file(credentialsId: env.CREDENTIAL, variable: 'KUBECONFIG')]) {
+              sh  """
+                 kubectl get pods -A
+                  """
+          }
       }
     }
   }
