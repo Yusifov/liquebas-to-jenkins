@@ -8,14 +8,14 @@ pipeline {
   stages {
     stage('Status') {
       steps {
-        sh 'liquibase status --url="jdbc:postgresql://experianconvexdev.galaksiya.net/pgadmin;databaseName=mlflow" --changeLogFile=my_app-wrapper.xml --username=postgres --password=fQy9yHzy'
+        sh 'liquibase status --url="jdbc:mysql://192.168.32.11:3306/my_app" --changeLogFile=my_app-wrapper.xml --username=$MARIADB_CREDS_USR --password=$MARIADB_CREDS_PSW'
       }
     }
-    // stage('Update') {
-    //   steps {
-    //     sh 'liquibase update --url="jdbc:postgresql://postgresql.postgresql.svc:5432/mlflow" --changeLogFile=my_app-wrapper.xml --username=postgres --password=fQy9yHzy'
-    //   }
-    // }
+    stage('Update') {
+      steps {
+        sh 'liquibase update --url="jdbc:mysql://192.168.32.11:3306/my_app" --changeLogFile=my_app-wrapper.xml --username=$MARIADB_CREDS_USR --password=$MARIADB_CREDS_PSW'
+      }
+    }
   }
   post {
     always {
