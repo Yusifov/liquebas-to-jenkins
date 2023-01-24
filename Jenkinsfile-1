@@ -4,8 +4,11 @@ pipeline {
   }
   stages {
     stage('Test') {
+      agent {
+          label 'slave-1'
+      }
       steps {
-        sh 'liquibase --version'
+        sh 'kubectl get pods -A'
       }
     }
   }
