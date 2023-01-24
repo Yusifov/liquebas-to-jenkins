@@ -16,7 +16,7 @@ pipeline {
       steps {
           withCredentials([file(credentialsId: env.CREDENTIAL, variable: 'KUBECONFIG')]) {
               sh  """
-                 kubectl get pods -A
+                 kubectl get ingress -A
                   """
           }
       }
