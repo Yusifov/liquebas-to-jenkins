@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: liquibase-deployment
+  namespace: liquibase
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: liquibase
+  template:
+    metadata:
+      labels:
+        app: liquibase
+    spec:
+      containers:
+      - name: liquibase
+        image: liquibase/liquibase
+        command:
+        - bash
+        - "-c"
+        - |
+          liquibase --url="jdbc:postgresql://postgresql.postgresql.svc:5432/mlflow" --username=${{USER_NAME}} --password=${{PASSWORD}} --classpath=/changelogs/ --searchPath=/changelogs/ --changeLogFile=changelog.sql status &&
+          liquibase --url="jdbc:postgresql://postgresql.postgresql.svc:5432/mlflow" --username=${{USER_NAME}} --password=${{PASSWORD}} --classpath=/changelogs/ --searchPath=/changelogs/ --changeLogFile=changelog.sql update
+        volumeMounts:
+        - name: changelog-volume
+          mountPath: /changelogs/
+        env:
+        - name: USER_NAME
+          valueFrom:
+            secretKeyRef:
+              name: mysqlpwd
+              key: password
+      volumes:
+      - name: changelog-volume
+        persistentVolumeClaim:
+          claimName: changelog-volume
+      - name: liquibase-secret
+        secret:
+          secretName: liquibase-secret
+
+

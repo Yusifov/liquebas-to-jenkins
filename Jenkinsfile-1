@@ -7,17 +7,39 @@ pipeline {
   }
   environment {
     CREDENTIAL = "${ENVIRONMENT == "dev" | ENVIRONMENT == "patch" ? "automlDev" : ENVIRONMENT == "prod" ? "automlIsnet" : "automlProd"}"
+    LABEL = "${ENVIRONMENT == "dev" | ENVIRONMENT == "patch" ? "slave-2" : "slave-1"}"
   }
   stages {
+    stage('Change log file on machine') {
+        agent {
+            label env.LABEL
+        }
+        steps {
+          withCredentials([file(credentialsId: env.CREDENTIAL, variable: 'KUBECONFIG')]) {
+              sh '''ls /mnt/
+                  hostname
+              '''
+              //cat env.WORKSPACE + "/automl-backend/liquibase/changelog.sql > /mnt/liquibase/changelog.sql 
+        }
+      }
+    }
     stage('Test') {
-      // when {
-      //   environment name: 'ENVIRONMENT', value: 'dev'
-      // }
       steps {
           withCredentials([file(credentialsId: env.CREDENTIAL, variable: 'KUBECONFIG')]) {
               sh  """
-                 kubectl get ingress -A
-                  """
+                kubectl scale --replicas=1 deployment/liquibase-deployment
+                sleep 15
+                kubectl scale --replicas=0 deployment/liquibase-deployment
+                """
+          }
+      }
+    }
+    stage('last step fon liquibase') {
+      steps {
+          withCredentials([file(credentialsId: env.CREDENTIAL, variable: 'KUBECONFIG')]) {
+              sh  """
+                kubectl exec -it postgresql-postgresql-0 -n postgresql -- /bin/sh -c "export PGPASSWORD=fQy9yHzy && psql -U postgres -d mlflow -c 'SELECT id author, deployment_id FROM public.databasechangelog;'" > deploymentid.txt
+                """
           }
       }
     }
